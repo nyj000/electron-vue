@@ -1,16 +1,65 @@
 'use strict'
+/* eslint-disable */
+import { app, BrowserWindow, Menu, ipcMain } from 'electron'
+console.log('---------__dirname-----', __dirname)
+// 注意这个autoUpdater不是electron中的autoUpdater
+import { autoUpdater } from "electron-updater"
+const uploadUrl = 'http://localhost:5000/'
+// 检测更新，在你想要检查更新的时候执行，renderer事件触发后的操作自行编写
+function updateHandle(mainWindow) {
+  console.log(111)
+  // 通过main进程发送事件给renderer进程，提示更新信息
+  function sendUpdateMessage(text) {
+    // mainWindow.webContents.send('message', text)
+    console.log(text)
+  }
 
-import { app, BrowserWindow, Menu } from 'electron'
-
-console.log('-----------------1', process.platform, require('../../package.json').version)
-// const server = 'http://localhost:8888'
-// const feed = `${server}/update/${process.platform}/${app.getVersion()}`
-//
-// autoUpdater.setFeedURL(feed)
-//
-// setInterval(() => {
-//   autoUpdater.checkForUpdates()
-// }, 5000)
+  let message = {
+    error: '检查更新出错',
+    checking: '正在检查更新……',
+    updateAva: '检测到新版本，正在下载……',
+    updateNotAva: '现在使用的就是最新版本，不用更新',
+  }
+  const os = require('os')
+ 
+  autoUpdater.setFeedURL(uploadUrl)
+  autoUpdater.on('error', function (error) {
+    sendUpdateMessage(message.error)
+  });
+  autoUpdater.on('checking-for-update', function () {
+    sendUpdateMessage(message.checking)
+  });
+  autoUpdater.on('update-available', function (info) {
+    sendUpdateMessage(message.updateAva)
+  });
+  autoUpdater.on('update-not-available', function (info) {
+    sendUpdateMessage(message.updateNotAva)
+  });
+ 
+  // 更新下载进度事件
+  autoUpdater.on('download-progress', function (progressObj) {
+    mainWindow.webContents.send('downloadProgress', progressObj)
+  })
+  autoUpdater.on('update-downloaded', function (event, releaseNotes, releaseName, releaseDate, updateUrl, quitAndUpdate) {
+ 
+    ipcMain.on('isUpdateNow', (e, arg) => {
+      console.log(arguments)
+      console.log("开始更新")
+      //some code here to handle event
+      autoUpdater.quitAndInstall()
+    });
+ 
+    mainWindow.webContents.send('isUpdateNow')
+  });
+  setTimeout(_ => {
+    autoUpdater.checkForUpdates()
+  }, 3000)
+  ipcMain.on("checkForUpdate",()=>{
+      //执行自动更新检查
+      autoUpdater.checkForUpdates()
+  })
+}
+ 
 /**
  * Set `__static` path to static files in production
  * https://simulatedgreg.gitbooks.io/electron-vue/content/en/using-static-assets.html
@@ -77,7 +126,11 @@ function createWindow () {
   //   event.newGuest.loadURL(`${url.replace('/child', '#/child')}`)
   // })
 
-  // mainWindow.openDevTools()
+  mainWindow.openDevTools()
+  // 检查更新
+  setTimeout(_ => {
+    updateHandle(mainWindow)
+  }, 3000)
 }
 
 app.on('ready', createWindow)
