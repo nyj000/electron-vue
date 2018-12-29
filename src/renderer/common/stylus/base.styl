@@ -1,0 +1,63 @@
+@import "variable.styl"
+
+html, body
+  height 100%
+  background: #f5f7f9;
+
+.keyword
+  color $color-theme
+.right-align
+  text-align right !important
+
+*
+  -webkit-font-smoothing: antialiased
+
+.bg-cover
+  background-size cover
+  background-position center center
+  background-repeat no-repeat
+.ib
+  display inline-block
+  vertical-align top
+.pull-left,.fl
+  float: left
+.pull-right,.fr
+  float: right
+.clearfix::after
+  content ""
+  height 0
+  line-height 0
+  display block
+  clear both
+  visibility hidden
+.left
+  text-align left
+.right
+  text-align right
+.center
+  text-align center
+.title-e
+  height 32px
+  margin: 10px 0
+  line-height @height
+  font-size: 16px
+.theme
+  color $color-theme
+.prompt
+  color $color-prompt
+  font-size: 14px
+.hand
+  cursor pointer
+// 扩展点击区域
+.big-click
+  position: relative
+  cursor pointer
+  &:hover
+    filter contrast(60%)
+  &::after
+    content: ''
+    position: absolute
+    top: -10px
+    left: @top
+    right: @top
+    bottom: @top

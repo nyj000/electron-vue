@@ -1,0 +1,26 @@
+// 颜色定义规范
+$color-theme = #2d8cf0
+$color-title = #333
+$color-content = #666
+$color-prompt = #999
+$color-aside-bg= rgb(0, 19, 42)
+$color-link= #2d8cf0
+
+
+$font-s = 12px
+$font-ss = 13px
+$font-m = 14px
+$font-mm = 15px
+$font-l = 16px
+$font-ll = 18px
+
+$main-header-height = 60px
+
+
+// 兼容写法, 产出 -webkit-属性 属性值
+vendor(prop, args)
+  -webkit-{prop} args
+  -moz-{prop} args
+  {prop} args
+$dpr2 = 'body[data-dpr="2"]'
+$dpr3 = 'body[data-dpr="3"]'
