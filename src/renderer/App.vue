@@ -18,6 +18,7 @@
 </template>
 
 <script>
+  import { ipcRenderer } from 'electron'
   export default {
     name: 'elevtron-vue',
     data: () => {
@@ -48,6 +49,14 @@
           }
         }
       }).catch(() => {
+      })
+      // 发现新版本
+      ipcRenderer.on('update-available', (event, arg) => {
+        console.log('ipcRenderer update-available', event, arg) // prints "pong"
+      })
+      // 新版本下载完成
+      ipcRenderer.on('isUpdateNow', (event, arg) => {
+        console.log('ipcRenderer isUpdateNow', event, arg) // prints "pong"
       })
     },
   }

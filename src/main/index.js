@@ -4,61 +4,6 @@ import { app, BrowserWindow, Menu, ipcMain } from 'electron'
 console.log('---------__dirname-----', __dirname)
 // 注意这个autoUpdater不是electron中的autoUpdater
 import { autoUpdater } from "electron-updater"
-const uploadUrl = 'http://localhost:5000/'
-// 检测更新，在你想要检查更新的时候执行，renderer事件触发后的操作自行编写
-function updateHandle(mainWindow) {
-  console.log(111)
-  // 通过main进程发送事件给renderer进程，提示更新信息
-  function sendUpdateMessage(text) {
-    // mainWindow.webContents.send('message', text)
-    console.log(text)
-  }
-
-  let message = {
-    error: '检查更新出错',
-    checking: '正在检查更新……',
-    updateAva: '检测到新版本，正在下载……',
-    updateNotAva: '现在使用的就是最新版本，不用更新',
-  }
-  const os = require('os')
- 
-  autoUpdater.setFeedURL(uploadUrl)
-  autoUpdater.on('error', function (error) {
-    sendUpdateMessage(message.error)
-  });
-  autoUpdater.on('checking-for-update', function () {
-    sendUpdateMessage(message.checking)
-  });
-  autoUpdater.on('update-available', function (info) {
-    sendUpdateMessage(message.updateAva)
-  });
-  autoUpdater.on('update-not-available', function (info) {
-    sendUpdateMessage(message.updateNotAva)
-  });
- 
-  // 更新下载进度事件
-  autoUpdater.on('download-progress', function (progressObj) {
-    mainWindow.webContents.send('downloadProgress', progressObj)
-  })
-  autoUpdater.on('update-downloaded', function (event, releaseNotes, releaseName, releaseDate, updateUrl, quitAndUpdate) {
- 
-    ipcMain.on('isUpdateNow', (e, arg) => {
-      console.log(arguments)
-      console.log("开始更新")
-      //some code here to handle event
-      autoUpdater.quitAndInstall()
-    });
- 
-    mainWindow.webContents.send('isUpdateNow')
-  });
-  setTimeout(_ => {
-    autoUpdater.checkForUpdates()
-  }, 3000)
-  ipcMain.on("checkForUpdate",()=>{
-      //执行自动更新检查
-      autoUpdater.checkForUpdates()
-  })
-}
  
 /**
  * Set `__static` path to static files in production
@@ -155,6 +100,62 @@ app.on('activate', () => {
  * https://simulatedgreg.gitbooks.io/electron-vue/content/en/using-electron-builder.html#auto-updating
  */
 
+// 检测更新，在你想要检查更新的时候执行，renderer事件触发后的操作自行编写
+const uploadUrl = require('../../package.json').build.publish[0].url
+// 通过main进程发送事件给renderer进程，提示更新信息
+function sendUpdateMessage(text) {
+  // mainWindow.webContents.send('message', text)
+  console.log(text)
+}
+let checkTimer = null
+function updateHandle(mainWindow) {
+  
+  let message = {
+    error: '检查更新出错',
+    checking: '正在检查更新……',
+    updateAva: '检测到新版本，正在下载……',
+    updateNotAva: '现在使用的就是最新版本，不用更新',
+  }
+ 
+  autoUpdater.setFeedURL(uploadUrl)
+  autoUpdater.on('error', function (error) {
+    sendUpdateMessage(message.error)
+  });
+  autoUpdater.on('checking-for-update', function () {
+    sendUpdateMessage(message.checking)
+  });
+  autoUpdater.on('update-available', function (info) {
+    sendUpdateMessage(message.updateAva)
+    // 下载完成，发消息给渲染进程
+    mainWindow.webContents.send('update-available', info)
+  });
+  autoUpdater.on('update-not-available', function (info) {
+    sendUpdateMessage(message.updateNotAva)
+  });
+ 
+  // 更新下载进度事件
+  autoUpdater.on('download-progress', function (progressObj) {
+    // mainWindow.webContents.send('downloadProgress', progressObj)
+  })
+  autoUpdater.on('update-downloaded', function (event, releaseNotes, releaseName, releaseDate, updateUrl, quitAndUpdate) {
+    mainWindow.webContents.send('isUpdateNow')
+  });
+  ipcMain.on('isUpdateNow', (e, arg) => {
+    console.log(arguments)
+    console.log("开始更新")
+    //some code here to handle event
+    autoUpdater.quitAndInstall()
+  });
+  // 开始5秒后检查一次更新
+  setTimeout(() => {
+    autoUpdater.checkForUpdates()
+  }, 5000)
+  clearInterval(checkTimer)
+  // 每10分钟检查一次更新
+  checkTimer = setInterval(() => {
+    autoUpdater.checkForUpdates()
+  }, 600000)
+}
 /*
 import { autoUpdater } from 'electron-updater'
 
